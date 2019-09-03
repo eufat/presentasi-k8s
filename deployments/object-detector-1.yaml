@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: object-detector
+spec:
+  replicas: 1
+  template:
+    spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: object-detector
+          image: eufat/object-detect:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: "4"
+              memory: "8G"
+              nodeflux.io/shared-gpu: 25
+          ports:
+            - name: rest-api
+              containerPort: 8080
+          ports:
+            - name: port
+              containerPort: 8081
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: cloud.google.com/gke-accelerator
+                    operator: In
+                    values:
+                      - nvidia-tesla-p4
